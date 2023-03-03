@@ -1,10 +1,12 @@
-//getStates
+//1. getStates
 GET http://localhost:3000/states/
 ###
 
-GET http://localhost:3000/states/2
+//2. getState
+GET http://localhost:3000/states/3
 ###
 
+//3. addDistrict
 POST http://localhost:3000/districts/
 Content-Type: application/json
 
@@ -19,5 +21,33 @@ Content-Type: application/json
 
 ###
 
-//getDistrict
-GET http://localhost:3000/districts/3/
+//4. getDistrict
+GET http://localhost:3000/districts/5/
+###
+
+//5. deleteDistrict
+DELETE http://localhost:3000/districts/4
+###
+
+
+//6. updateDistrict
+PUT http://localhost:3000/districts/5/
+Content-Type: application/json
+
+{
+  "districtName": "Nadia",
+  "stateId": 3,
+  "cases": 9628,
+  "cured": 6524,
+  "active": 3000,
+  "deaths": 104
+}
+###
+
+//7. getStats
+GET http://localhost:3000/states/6/stats
+###
+
+
+//8. getStateNameByDistrictId
+GET http://localhost:3000/districts/2/details/

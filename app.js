@@ -28,20 +28,10 @@ initializeDBAndServer();
 //API-1 getStates
 
 expressAppInstance.get('/states/', async(request, response)=>{
-    const getStatesQuery = `SELECT * FROM state`;
+    const getStatesQuery = `SELECT state_id as stateId, state_name as stateName, population FROM state`;
     try{
         let arrayOfStateObjects = await databaseConnectionObject.all(getStatesQuery)
-        console.log(arrayOfStateObjects)
-        arrayOfStateObjects = arrayOfStateObjects.map((eachObject)=>{
-            let tempStateObject = {
-                stateId : eachObject["state_id"],
-                stateName: eachObject["state_name"],
-                population: eachObject['population']
-            }
-            return tempStateObject
-        })
         response.send(arrayOfStateObjects)
-
     }
     catch(e){
         console.log(`Database Error ${e.message}`)
@@ -54,15 +44,10 @@ expressAppInstance.get("/states/:stateId", async(request, response)=>{
     let {stateId} = request.params;
     stateId = parseInt(stateId)
     
-    const getStateQuery = `SELECT * FROM state WHERE state_id = ${stateId}`
+    const getStateQuery = `SELECT state_id as stateId, state_name as stateName, population FROM state WHERE state_id = ${stateId}`
     try{
         const stateObject = await databaseConnectionObject.get(getStateQuery)
-        let tempStateObject = {
-            stateId : stateObject['state_id'],
-            stateName : stateObject['state_name'],
-            population : stateObject['population'] 
-        }
-        response.send(tempStateObject)
+        response.send(stateObject)
     }catch(e){
         console.log(`Database Error ${e.message}`)
     }
@@ -95,22 +80,85 @@ expressAppInstance.get('/districts/:districtId', async(request, response)=>{
     let {districtId} = request.params;
     districtId = parseInt(districtId)
     
-    const getDistrictQuery = `SELECT * FROM district WHERE district_id = ${districtId}`
+    const getDistrictQuery = `SELECT district_id as districtId, district_name as districtName, state_id as stateId, cases, cured, active, deaths FROM district WHERE district_id = ${districtId}`
     try{
         const districtObject = await databaseConnectionObject.get(getDistrictQuery)
-        let tempDistrictObject = {
-            districtId: districtObject["district_id"],
-            districtName: districtObject['district_name'],
-            stateId: districtObject["state_id"],
-            cases: districtObject["cases"],
-            cured: districtObject["cured"],
-            active: districtObject["active"],
-            deaths: districtObject.deaths
-        }
-        response.send(tempDistrictObject)
+        response.send(districtObject)
     }catch(e){
         console.log(`Database Error ${e.message}`)
     }
     
 })
 
+//API-5 deleteDistrict
+
+expressAppInstance.delete('/districts/:districtId', async(request, response)=>{
+    let {districtId} = request.params;
+    districtId = parseInt(districtId)
+
+    const deleteDistrictQuery = `DELETE FROM district WHERE district_id = ${districtId}`
+
+    try{
+        await databaseConnectionObject.run(deleteDistrictQuery)
+        response.send('District Removed')
+    }catch(e){
+        console.log(`Database Error ${e.message}`)
+    }
+
+})
+
+//API-6 updateDistrict
+
+expressAppInstance.put("/districts/:districtId", async(request, response)=>{
+    let {districtId} = request.params;
+    districtId = parseInt(districtId)
+
+    let districtObject = request.body;
+
+    const{districtName,stateId, cases, cured, active, deaths} = districtObject
+    
+    const updateDistrictQuery = `UPDATE district SET district_name = "${districtName}", state_id = ${stateId},
+    cases = ${cases}, cured=${cured}, active = ${active}, deaths= ${deaths}
+    WHERE district_id = ${districtId}`
+
+    try{
+        await databaseConnectionObject.run(updateDistrictQuery);
+        response.send("District Details Updated");
+    }catch(e){
+        console.log(`Database Error ${e.message}`)
+    }    
+})
+
+//API-7 getStats
+
+expressAppInstance.get("/states/:stateId/stats", async(request, response)=>{
+    let {stateId} = request.params;
+    stateId = parseInt(stateId);
+
+    const getStatsQuery = `SELECT SUM(cases) as totalCases, SUM(cured) as totalCured, SUM(active) as totalActive, SUM(deaths) as totalDeaths FROM district WHERE state_id = ${stateId}`
+    try{
+        const responseObject = await databaseConnectionObject.get(getStatsQuery);
+        response.send(responseObject)   
+    }catch(e){
+        console.log(`Database Error ${e.message}`)
+    }
+    
+})
+
+//API-8 getStateNameByDistrictId
+
+expressAppInstance.get('/districts/:districtId/details/', async(request, response)=>{
+    let {districtId} = request.params;
+    districtId = parseInt(districtId);
+
+    const getStateNameByDistrictIdQuery = `SELECT state_name as stateName FROM state NATURAL JOIN district WHERE district_id=${districtId}`
+    try{
+        const stateNameObject = await databaseConnectionObject.all(getStateNameByDistrictIdQuery);
+        response.send(stateNameObject[0])
+    }catch(e){
+        console.log(`Database Error ${e.message}`)
+    }
+})
+
+
+module.exports = expressAppInstance;
